@@ -1,0 +1,359 @@
+getgenv().MoneyPrinter = {
+    sendWeb = true,
+    webURL = "https://discord.com/api/webhooks/1220052880208297995/Sl8TKR8J1-1vXk32EIddefjtlT8xIAJDxYAOvCqhdqO6ooRRMfy2hoSZF_KIiGKpF0vK",
+}
+repeat
+    task.wait(1)
+until game:IsLoaded()
+
+repeat
+    task.wait(1)
+until game.PlaceId ~= nil
+
+repeat
+    task.wait(1)
+until game:GetService("Players").LocalPlayer and game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character.HumanoidRootPart
+
+
+if game.PlaceId == 8737899170 then
+    repeat
+        task.wait(1)
+    until #game:GetService("Workspace").Map:GetChildren() == 100
+elseif game.PlaceId == 16498369169 then
+    repeat
+        task.wait(1)
+    until #game:GetService("Workspace").Map2:GetChildren() == 51
+end
+
+
+repeat
+    task.wait(1)
+until game:GetService("Workspace").__THINGS and game:GetService("Workspace").__DEBRIS
+
+task.wait(2)
+
+print("[CLIENT] Loaded Game")
+
+local WAITING = false
+
+local function serverhop(player)
+    local timeToWait = Random.new():NextInteger(300, 600)
+    print("[ANTI-STAFF] BIG Games staff (" .. player.Name ..  ") is in server! Waiting for " .. tostring(timeToWait) .. " seconds before server hopping...")
+    task.wait(timeToWait)
+
+    local success, _ = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/fdvll/pet-simulator-99/main/serverhop.lua"))()
+    end)
+
+    if not success then
+        game.Players.LocalPlayer:Kick("[ANTI-STAFF] A BIG Games staff member joined and script was unable to server hop")
+    end
+end
+
+for _, player in pairs(game.Players:GetPlayers()) do
+    local success, _ = pcall(function()
+        if player:IsInGroup(5060810) then
+            WAITING = true
+            serverhop(player)
+        end
+    end)
+    if not success then
+        print("[ANTI-STAFF] Error while checking player: " .. player.Name)
+    end
+end
+
+print("[ANTI-STAFF] No staff member detected")
+
+game.Players.PlayerAdded:Connect(function(player)
+    if player:IsInGroup(5060810) and not WAITING then
+        getgenv().autoBalloon = false
+        getgenv().autoChest = false
+        getgenv().autoFishing = false
+
+        getgenv().STAFF_DETECTED = true
+
+        print("[ANTI-STAFF] Staff member joined, stopping all scripts")
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Anchored = false
+
+        local world
+        local mapPath
+        if game.PlaceId == 8737899170 then
+            mapPath = game:GetService("Workspace").Map
+            world = "World 1"
+        elseif game.PlaceId == 16498369169 then
+            mapPath = game:GetService("Workspace").Map2
+            world = "World 1"
+        end
+
+
+        local _, zoneData
+
+        if world == "World 1" then
+            _, zoneData = require(game:GetService("ReplicatedStorage").Library.Util.ZonesUtil).GetZoneFromNumber(Random.new():NextInteger(40, 90))
+        else
+            _, zoneData = require(game:GetService("ReplicatedStorage").Library.Util.ZonesUtil).GetZoneFromNumber(Random.new():NextInteger(5, 20))
+        end
+
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = mapPath[tostring(zoneData["_script"])].PERSISTENT.Teleport.CFrame
+
+        serverhop(player)
+    end
+end)
+
+getgenv().autoBalloon = true
+
+getgenv().autoBalloonConfig = {
+    START_DELAY = 1, -- delay before starting
+    SERVER_HOP = true, -- server hop after popping balloons
+    SERVER_HOP_DELAY = 0, -- delay before server hopping
+    BALLOON_DELAY = 1, -- delay before popping next balloon (if there are multiple balloons in the server)
+    GET_BALLOON_DELAY = 1, -- delay before getting balloons again if none are detected
+    WAIT_FOR_BREAK = 2 -- delay in seconds to wait for the gift to break
+}
+
+for _, lootbag in pairs(game:GetService("Workspace").__THINGS:FindFirstChild("Lootbags"):GetChildren()) do
+    if lootbag then
+        game:GetService("ReplicatedStorage"):WaitForChild("Network"):WaitForChild("Lootbags_Claim"):FireServer(unpack( { [1] = { [1] = lootbag.Name, }, } ))
+        lootbag:Destroy()
+        task.wait()
+    end
+end
+
+game:GetService("Workspace").__THINGS:FindFirstChild("Lootbags").ChildAdded:Connect(function(lootbag)
+    task.wait()
+    if lootbag then
+        game:GetService("ReplicatedStorage"):WaitForChild("Network"):WaitForChild("Lootbags_Claim"):FireServer(unpack( { [1] = { [1] = lootbag.Name, }, } ))
+        lootbag:Destroy()
+    end
+end)
+
+game:GetService("Workspace").__THINGS:FindFirstChild("Orbs").ChildAdded:Connect(function(orb)
+    task.wait()
+    if orb then
+        game:GetService("ReplicatedStorage"):WaitForChild("Network"):FindFirstChild("Orbs: Collect"):FireServer(unpack( { [1] = { [1] = tonumber(orb.Name), }, } ))
+        orb:Destroy()
+    end
+end)
+
+print("Made by flix")
+task.wait(getgenv().autoBalloonConfig.START_DELAY)
+
+local LargeRAP = 12000; local SmallRAP = 3000
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = game:GetService("Players").LocalPlayer
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local Player = game:GetService("Players").LocalPlayer
+local RepStor = game:GetService("ReplicatedStorage")
+local Library = require(RepStor.Library)
+local HRP = Player.Character.HumanoidRootPart
+local saveMod = require(RepStor.Library.Client.Save)
+local BreakMod = require(RepStor.Library.Client.BreakableCmds)
+local Slingshot = getsenv(Player.PlayerScripts.Scripts.Game.Misc.Slingshot)
+local RAPValues = getupvalues(require(RepStor.Library).DevRAPCmds.Get)[1]
+hookfunction(require(game.ReplicatedStorage.Library.Client.PlayerPet).CalculateSpeedMultiplier, function() return 250 end)
+function getInfo(name) return saveMod.Get()[name] end 
+function getTool() return Player.Character:FindFirstChild("WEAPON_"..Player.Name, true) end
+function equipTool(toolName) return Library.Network.Invoke(toolName.."_Toggle") end
+function getCurrentZone() return Library["MapCmds"].GetCurrentZone() end
+local startBalloons = #workspace.__THINGS.BalloonGifts:GetChildren()
+
+
+
+function getBalloonUID(zoneName) 
+	for i,v in pairs(BreakMod.AllByZoneAndClass(zoneName, "Chest")) do
+		if v:GetAttribute("OwnerUsername") == Player.Name and string.find(v:GetAttribute("BreakableID"), "Balloon Gift") then
+			return v:GetAttribute("BreakableUID")
+		elseif v:GetAttribute("OwnerUserName") ~= Player.Name and string.find(v:GetAttribute("BreakableID"), "Balloon Gift") then
+			return "Skip"
+		end
+	end
+end
+function getServer()
+	local servers = game.HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. tostring(game.PlaceId) .. '/servers/Public?sortOrder=Asc&limit=100')).data
+	local server = servers[Random.new():NextInteger(1, 100)]
+	if server then return server else return getServer() end
+end
+function getPresents() for i,v in pairs(Library.Save.Get().HiddenPresents) do 
+		if not v.Found and v.ID then 
+			local success,reason = Library.Network.Invoke("Hidden Presents: Found", v.ID) 
+		end 
+	end 
+end
+
+function sendNotif(msg)
+	local message = {content = msg}
+	local jsonMessage = HttpService:JSONEncode(message)
+	local success, webMessage = pcall(function() 
+		HttpService:PostAsync(getgenv().MoneyPrinter.webURL, jsonMessage) 
+	end)
+	if not success then 
+		local response = request({Url = getgenv().MoneyPrinter.webURL,Method = "POST",Headers = {["Content-Type"] = "application/json"},Body = jsonMessage})
+	end
+end
+
+local startGifts = 0
+local startLarge = 0
+
+for i,v in pairs(getInfo("Inventory").Misc) do
+	if startGifts ~= 0 and startLarge ~= 0 then break end
+	if v.id == "Gift Bag" then
+		startGifts = (v._am or 1)
+	elseif v.id == "Large Gift Bag" then
+		startLarge = (v._am or 1)
+	end
+end
+
+local startTime = os.time()
+
+function getTotalRAP(num)
+	local suffixes = {"", "k", "m", "b"}
+	local suffixInd = 1
+	while num >= 1000 and suffixInd < #suffixes do
+		num = num / 1000
+		suffixInd = suffixInd + 1
+	end
+	local formattedNum
+	if num % 1 == 0 then
+		formattedNum = string.format("%d", num)
+	else
+		formattedNum = string.format("%.1f", num):gsub("%.?0+$", "")
+	end
+	return formattedNum .. suffixes[suffixInd]
+end
+
+-- Ensure 'Highlight' exists before attempting to destroy it
+local highlight = Workspace.__THINGS.Breakables:FindFirstChild("Highlight")
+if highlight then
+    highlight:Destroy()
+end
+
+local function IsWithinDistance(object, maxDistance)
+    local localPlayer = Players.LocalPlayer
+    if localPlayer and localPlayer.Character then
+        local playerPosition = localPlayer.Character.HumanoidRootPart.Position
+        local objectPosition = object.WorldPivot.Position
+        local distance = (playerPosition - objectPosition).magnitude
+        return distance <= maxDistance
+    end
+    return false
+end
+
+MaxDistance = 5
+spawn(function()
+    while true do
+        local breakables = Workspace.__THINGS.Breakables:GetChildren()
+        for _, breakable in pairs(breakables) do
+            if IsWithinDistance(breakable, MaxDistance) then
+                local Model = Workspace.__THINGS.Breakables:FindFirstChild(breakable.Name)
+                while Model and IsWithinDistance(Model, MaxDistance) do
+                    local args = { breakable.Name } -- Assuming the name of the model is the argument
+                    ReplicatedStorage:WaitForChild("Network"):WaitForChild("Breakables_PlayerDealDamage"):FireServer(unpack(args))
+                    Model = Workspace.__THINGS.Breakables:FindFirstChild(breakable.Name)
+                    wait()
+                end
+            end
+        end
+        wait()
+    end
+end)
+
+while getgenv().autoBalloon do
+    local balloonIds = {}
+
+    local getActiveBalloons = ReplicatedStorage.Network.BalloonGifts_GetActiveBalloons:InvokeServer()
+
+    local allPopped = true
+    for i, v in pairs(getActiveBalloons) do
+        if not v.Popped then
+            allPopped = false
+            print("Unpopped balloon found")
+            balloonIds[i] = v
+        end
+    end
+
+    if allPopped then
+        print("No balloons detected, waiting " .. getgenv().autoBalloonConfig.GET_BALLOON_DELAY .. " seconds")
+        if getgenv().autoBalloonConfig.SERVER_HOP then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/fdvll/pet-simulator-99/main/serverhop.lua"))()
+        end
+        task.wait(getgenv().autoBalloonConfig.GET_BALLOON_DELAY)
+        continue
+    end
+
+    if not getgenv().autoBalloon then
+        break
+    end
+
+    local originalPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
+
+    LocalPlayer.Character.HumanoidRootPart.Anchored = true
+    for balloonId, balloonData in pairs(balloonIds) do
+        LocalPlayer.Character.HumanoidRootPart.Anchored = true
+        print("Popping balloon")
+
+        local balloonPosition = balloonData.Position
+
+        ReplicatedStorage.Network.Slingshot_Toggle:InvokeServer()
+
+        task.wait()
+
+        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(balloonPosition.X, balloonPosition.Y + 30, balloonPosition.Z)
+
+        task.wait()
+
+        local args = {
+            [1] = Vector3.new(balloonPosition.X, balloonPosition.Y + 25, balloonPosition.Z),
+            [2] = 0.5794160315249014,
+            [3] = -0.8331117721691044,
+            [4] = 200
+        }
+
+        ReplicatedStorage.Network.Slingshot_FireProjectile:InvokeServer(unpack(args))
+
+        task.wait(0.1)
+
+        local args = {
+            [1] = balloonId
+        }
+
+        ReplicatedStorage.Network.BalloonGifts_BalloonHit:FireServer(unpack(args))
+
+        LocalPlayer.Character.HumanoidRootPart.Anchored = false
+
+        task.wait(getgenv().autoBalloonConfig.WAIT_FOR_BREAK)
+
+        ReplicatedStorage.Network.Slingshot_Unequip:InvokeServer()
+
+        print("Popped balloon, waiting " .. tostring(getgenv().autoBalloonConfig.BALLOON_DELAY) .. " seconds")
+        task.wait(getgenv().autoBalloonConfig.BALLOON_DELAY)
+    end
+
+	local endGifts = 0
+	local endLarge = 0 
+		for i,v in pairs(getInfo("Inventory").Misc) do
+			if endGifts ~= 0 and endLarge ~= 0 then break end
+				if v.id == "Gift Bag" then
+					endGifts = (v._am or 1)
+				elseif v.id == "Large Gift Bag" then
+					endLarge = (v._am or 1)
+				end
+			end
+			local currentTime = os.time()
+			if getgenv().MoneyPrinter.sendWeb then
+				sendNotif("```asciidoc\n[ "..Player.Name.." Earned ]\n‐ "..tostring(endGifts - startGifts).." Small :: "..tostring(getTotalRAP((endGifts - startGifts) * SmallRAP)).." \n‐ "..tostring(endLarge - startLarge).." Large :: "..tostring(getTotalRAP((endLarge - startLarge) * LargeRAP)).." \n\n[ Total / Server ]\n‐ "..tostring(endGifts).." Small :: "..tostring(getTotalRAP(endGifts * SmallRAP)).." \n‐ "..tostring(endLarge).." Large :: "..tostring(getTotalRAP(endLarge * LargeRAP)).." \n- took "..tostring(currentTime - startTime).." seconds \n- had "..tostring(startBalloons).." balloons\n```")
+			end
+
+    if getgenv().autoBalloonConfig.SERVER_HOP then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/fdvll/pet-simulator-99/main/serverhop.lua"))()
+    end
+
+    LocalPlayer.Character.HumanoidRootPart.Anchored = false
+    LocalPlayer.Character.HumanoidRootPart.CFrame = originalPosition
+end
